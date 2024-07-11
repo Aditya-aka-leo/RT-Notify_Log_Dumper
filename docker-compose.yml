@@ -33,7 +33,7 @@ services:
           "CMD",
           "kafka-topics",
           "--bootstrap-server",
-          "localhost:9092",
+          "kafka:9092",
           "--list",
         ]
       interval: 30s
@@ -42,9 +42,22 @@ services:
     networks:
       - nz
 
+  python-server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    networks:
+      - nz
+   
+
   admin:
     build:
-      context: ./kafka/admin
+      context: ./KafkaFolder/admin
     container_name: kafka-admin
     depends_on:
       kafka:
@@ -52,16 +65,17 @@ services:
     environment:
       KAFKA_BROKER: kafka:9092
     healthcheck:
-      test: ["CMD-SHELL", "test -f /tmp/admin_done"]
-      interval: 10s
-      timeout: 5s
+      test: ["CMD-SHELL", "python3 -c 'from kafka.admin import KafkaAdminClient; KafkaAdminClient(bootstrap_servers=\"kafka:9092\").list_topics()'"]
+      interval: 30s
+      timeout: 10s
       retries: 5
     networks:
       - nz
 
+
   consumer:
     build:
-      context: ./kafka/consumer
+      context: ./KafkaFolder/consumer
     container_name: kafka-consumer
     depends_on:
       kafka:
@@ -70,21 +84,10 @@ services:
         condition: service_healthy
     environment:
       KAFKA_BROKER: kafka:9092
-    env_file:
-      - .env
     networks:
       - nz
 
-  producer:
-    build:
-      context: ./kafka/producer
-    container_name: kafka-producer
-    depends_on:
-      kafka:
-        condition: service_healthy
-      admin:
-        condition: service_healthy
-    environment:
-      KAFKA_BROKER: kafka:9092
-    networks:
-      - nz
+
+networks:
+  nz:
+    driver: bridge
