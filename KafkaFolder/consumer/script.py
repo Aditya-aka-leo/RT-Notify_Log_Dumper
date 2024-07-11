@@ -5,11 +5,11 @@ from kafka import KafkaConsumer
 from controller.LogViewer import LogViewer
 from controller.LogDbPusher import LogDbPusher
 from controller.ErrorDbPusher import ErrorDbPusher
+from controller.ChannelAggregator import ChannelAggregator
 from threading import Thread
 import signal
 import sys
 
-# Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def create_consumer(group_id, topic):
@@ -45,16 +45,16 @@ def run():
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
-    # Create consumers for each topic
     ErrorDumperConsumer = create_consumer("Error-Dumper", "Error-Dumper")
     LogDumperConsumer = create_consumer("Log-Dumper", "Log-Dumper")
     LogViewerConsumer = create_consumer("Log-Viewer", "Log-Viewer")
+    ChannelAggregatorConsumer = create_consumer("Channel-Aggregator", "Channel-Aggregator")
 
-    # Start consuming topics
     threads = [
         Thread(target=consume_topic, args=(ErrorDumperConsumer, ErrorDbPusher)),
         Thread(target=consume_topic, args=(LogDumperConsumer, LogDbPusher)),
-        Thread(target=consume_topic, args=(LogViewerConsumer, LogViewer))
+        Thread(target=consume_topic, args=(LogViewerConsumer, LogViewer)),
+        Thread(target=consume_topic, args=(ChannelAggregatorConsumer, ChannelAggregator))
     ]
 
     for thread in threads:

@@ -1,14 +1,24 @@
-from  src.utils.Kafka.producer import ProducerClient
+from flask import Flask, request, jsonify
+from src.utils.Kafka.producer import ProducerClient
 
 producer = ProducerClient()
-try:
-    producer.send('Error-Dumper', {'message': 'Hello Kafka'})
-    producer.send('Log-Dumper', {'message': 'Hello Kafka'})
-    producer.send('Log-Viewer', {'message': 'Hello Kafka'})
-    producer.flush()
-    print("Messages sent successfully")
-except Exception as e:
-        print(f"Error sending messages: {e}")
-finally:
-        producer.close()
 
+app = Flask(__name__)
+
+@app.route('/api/data', methods=['POST'])
+def handle_data():
+    if request.is_json:
+        data = request.get_json()
+        print(data)
+        try:
+            producer.send('Channel-Aggregator', data)
+            response = {"message": "Data sent to Kafka"}
+            return jsonify(response), 200
+        except Exception as e:
+            response = {"error": str(e)}
+            return jsonify(response), 500
+    else:
+        return jsonify({"error": "Request must be JSON"}), 400
+
+if __name__ == '__main__':
+    app.run(debug=True, port=8000,host='0.0.0.0')

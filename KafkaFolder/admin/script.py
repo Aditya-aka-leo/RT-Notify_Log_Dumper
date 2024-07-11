@@ -3,7 +3,7 @@ import time
 
 def create_kafka_admin_client():
     return KafkaAdminClient(
-        bootstrap_servers=['kafka:9092'],  # Use 'kafka' if running in Docker
+        bootstrap_servers=['kafka:9092'],  
         client_id='LogDumper'
     )
 
@@ -11,6 +11,7 @@ topic_configurations = [
     NewTopic(name="Error-Dumper", num_partitions=1, replication_factor=1),
     NewTopic(name="Log-Dumper", num_partitions=1, replication_factor=1),
     NewTopic(name="Log-Viewer", num_partitions=1, replication_factor=1),
+    NewTopic(name="Channel-Aggregator", num_partitions=1, replication_factor=1),
 ]
 
 def create_topics(admin):
